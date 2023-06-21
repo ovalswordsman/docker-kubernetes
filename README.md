@@ -47,3 +47,63 @@ Validate entry in postgres<br>
 <br>
 <img width="402" alt="Screenshot 2023-05-11 at 12 33 04 PM" src="https://github.com/ovalswordsman/docker-kubernetes/assets/54627996/d2fc0132-2e6c-4176-8461-f7413daf786a">
 
+
+# Kubernetes
+<b>1.</b> Installed minikube
+```
+brew install minikube
+```
+<b>2.</b>Started minikube
+```
+minikube start
+```
+<b>3.</b>Using the postgres-deployment.yaml file the pod containing postgres container was made. The following command was used,
+```
+kubectl apply -f postgres-deployment.yaml
+```
+<b>4.</b>Added dependencies of python and airflow in a postgres image by using the following commands inside the postgres pod.
+```
+apt-get -y update
+apt-get  -y install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev wget 
+wget https://www.python.org/ftp/python/3.7.12/Python-3.7.12.tgz
+tar -xf Python-3.7.12.tgz
+cd /Python-3.7.12
+./configure --enable-optimizations
+make -j $(nproc)
+make altinstall
+# STEPS TO INSTALL AIRFLOW VERSION 2.5.0
+apt-get install libpq-dev
+pip3.7 install "apache-airflow[postgres]==2.5.0" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.5.0/constraints-3.7.txt"
+export AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql://airflow:airflow@localhost:5432/airflow
+airflow db init
+airflow users create -u airflow -p airflow -f kushagra -l singh -e kush2.official@gmail.com -r Admin
+```
+
+<b>5.</b>Then created a service of type clusterIP by running postgres-service.yaml to give access to postgres pods inside the cluster. The following command was used.
+
+```
+kubectl apply -f postgres-service.yaml
+```
+
+<b>6.</b>So entered the airflow scheduler container as root user using the following commands
+
+```
+minikube ssh #To login inside minikube cluster
+docker exec -it -u root <container-id> /bin/bash #To get inside scheduler container
+cd /opt/airflow/dags #Changed directory to dags folder
+
+#Installed vim
+apt-get update
+apt-get install vim
+vim my_db_dag.py #Made this file and copied my code inside it
+```
+<b>7.</b>Created a service of type load balancer by running airflow-service.yaml to access airflow webserver from my local system using the following command
+    
+```
+kubectl apply -f airflow-service.yaml 
+```
+    
+Accessed the airflow webserver by running the command minikube service airflow. Upon logging in, the dag was visible and it ran successfully.
+    
+    
+    
